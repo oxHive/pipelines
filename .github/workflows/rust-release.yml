@@ -17,26 +17,26 @@ on:
 
 jobs:
   verify-version:
-    uses: oxHive/pipelines/.github/workflows/rust/verify-version.yml@main
+    uses: oxHive/pipelines/.github/workflows/rust-verify-version.yml@main
     with:
       package-name: ${{ inputs.package-name }}
 
   check:
     needs: verify-version
-    uses: oxHive/pipelines/.github/workflows/rust/check.yml@main
+    uses: oxHive/pipelines/.github/workflows/rust-check.yml@main
 
   build-binaries:
     needs: check
-    uses: oxHive/pipelines/.github/workflows/rust/build-binaries.yml@main
+    uses: oxHive/pipelines/.github/workflows/rust-build-binaries.yml@main
     with:
       binary-name: ${{ inputs.binary-name }}
 
   github-release:
     needs: build-binaries
-    uses: oxHive/pipelines/.github/workflows/shared/github-release.yml@main
+    uses: oxHive/pipelines/.github/workflows/shared-github-release.yml@main
 
   publish-crates:
     needs: github-release
-    uses: oxHive/pipelines/.github/workflows/rust/publish-crates.yml@main
+    uses: oxHive/pipelines/.github/workflows/rust-publish-crates.yml@main
     secrets:
       CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
