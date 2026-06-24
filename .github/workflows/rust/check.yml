@@ -1,4 +1,4 @@
-name: Rust Build & Check
+name: Rust Check
 
 on:
   workflow_call:
@@ -9,7 +9,7 @@ on:
         default: 60
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
 
     steps:
