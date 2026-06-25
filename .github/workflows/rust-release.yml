@@ -68,12 +68,13 @@ jobs:
           MATRIX_ALERT_ROOM_ID: ${{ secrets.MATRIX_ALERT_ROOM_ID }}
         run: |
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ENCODED_ROOM=$(jq -rn --arg r "${MATRIX_ALERT_ROOM_ID}" '$r | @uri')
           BODY=$(jq -n \
             --arg body "Release pipeline failed for ${{ github.ref_name }}: ${RUN_URL}" \
             --arg formatted "<b>${{ github.repository }}</b> release pipeline failed for <code>${{ github.ref_name }}</code> — <a href=\"${RUN_URL}\">view run</a>" \
             '{msgtype: "m.text", body: $body, format: "org.matrix.custom.html", formatted_body: $formatted}')
           curl -sf -X PUT \
-            "${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${MATRIX_ALERT_ROOM_ID}/send/m.room.message/${{ github.run_id }}-fail" \
+            "${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${ENCODED_ROOM}/send/m.room.message/${{ github.run_id }}-fail" \
             -H "Authorization: Bearer ${MATRIX_ACCESS_TOKEN}" \
             -H "Content-Type: application/json" \
             -d "${BODY}"

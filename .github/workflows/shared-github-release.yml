@@ -55,12 +55,13 @@ jobs:
           MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
         run: |
           RELEASE_URL="${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+          ENCODED_ROOM=$(jq -rn --arg r "${MATRIX_ROOM_ID}" '$r | @uri')
           BODY=$(jq -n \
             --arg body "Released ${{ github.ref_name }}: ${RELEASE_URL}" \
             --arg formatted "<b>${{ github.repository }}</b> released <a href=\"${RELEASE_URL}\">${{ github.ref_name }}</a>" \
             '{msgtype: "m.text", body: $body, format: "org.matrix.custom.html", formatted_body: $formatted}')
           curl -sf -X PUT \
-            "${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${MATRIX_ROOM_ID}/send/m.room.message/${{ github.run_id }}" \
+            "${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${ENCODED_ROOM}/send/m.room.message/${{ github.run_id }}" \
             -H "Authorization: Bearer ${MATRIX_ACCESS_TOKEN}" \
             -H "Content-Type: application/json" \
             -d "${BODY}"
