@@ -2,6 +2,13 @@ name: GitHub Release
 
 on:
   workflow_call:
+    secrets:
+      MATRIX_HOMESERVER:
+        required: false
+      MATRIX_ACCESS_TOKEN:
+        required: false
+      MATRIX_ROOM_ID:
+        required: false
 
 jobs:
   release:
@@ -37,3 +44,21 @@ jobs:
         with:
           body_path: CHANGES.md
           files: artifacts/*.tar.gz
+
+      - name: Notify Matrix
+        if: ${{ secrets.MATRIX_ACCESS_TOKEN != '' }}
+        env:
+          MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+          MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+          MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
+        run: |
+          RELEASE_URL="${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+          BODY=$(jq -n \
+            --arg body "Released ${{ github.ref_name }}: ${RELEASE_URL}" \
+            --arg formatted "<b>${{ github.repository }}</b> released <a href=\"${RELEASE_URL}\">${{ github.ref_name }}</a>" \
+            '{msgtype: "m.text", body: $body, format: "org.matrix.custom.html", formatted_body: $formatted}')
+          curl -sf -X PUT \
+            "${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${MATRIX_ROOM_ID}/send/m.room.message/${{ github.run_id }}" \
+            -H "Authorization: Bearer ${MATRIX_ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "${BODY}"

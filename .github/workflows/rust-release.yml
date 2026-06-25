@@ -14,6 +14,14 @@ on:
     secrets:
       CARGO_REGISTRY_TOKEN:
         required: true
+      MATRIX_HOMESERVER:
+        required: false
+      MATRIX_ACCESS_TOKEN:
+        required: false
+      MATRIX_ROOM_ID:
+        required: false
+      MATRIX_ALERT_ROOM_ID:
+        required: false
 
 jobs:
   verify-version:
@@ -34,9 +42,36 @@ jobs:
   github-release:
     needs: build-binaries
     uses: oxHive/pipelines/.github/workflows/shared-github-release.yml@main
+    secrets:
+      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
 
   publish-crates:
     needs: github-release
     uses: oxHive/pipelines/.github/workflows/rust-publish-crates.yml@main
     secrets:
       CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  notify-failure:
+    needs: [verify-version, check, build-binaries, github-release, publish-crates]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Matrix
+        if: ${{ secrets.MATRIX_ACCESS_TOKEN != '' }}
+        env:
+          MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+          MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+          MATRIX_ALERT_ROOM_ID: ${{ secrets.MATRIX_ALERT_ROOM_ID }}
+        run: |
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          BODY=$(jq -n \
+            --arg body "Release pipeline failed for ${{ github.ref_name }}: ${RUN_URL}" \
+            --arg formatted "<b>${{ github.repository }}</b> release pipeline failed for <code>${{ github.ref_name }}</code> — <a href=\"${RUN_URL}\">view run</a>" \
+            '{msgtype: "m.text", body: $body, format: "org.matrix.custom.html", formatted_body: $formatted}')
+          curl -sf -X PUT \
+            "${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${MATRIX_ALERT_ROOM_ID}/send/m.room.message/${{ github.run_id }}-fail" \
+            -H "Authorization: Bearer ${MATRIX_ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "${BODY}"
