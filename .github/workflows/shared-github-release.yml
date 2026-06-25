@@ -16,6 +16,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: read
+    env:
+      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
 
     steps:
       - uses: actions/checkout@v7
@@ -46,7 +48,7 @@ jobs:
           files: artifacts/*.tar.gz
 
       - name: Notify Matrix
-        if: ${{ secrets.MATRIX_ACCESS_TOKEN != '' }}
+        if: ${{ env.MATRIX_ACCESS_TOKEN != '' }}
         env:
           MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
           MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
