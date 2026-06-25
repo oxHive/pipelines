@@ -23,6 +23,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-tags: true
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
