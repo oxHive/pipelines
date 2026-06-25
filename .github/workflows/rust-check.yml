@@ -9,7 +9,7 @@ on:
         default: 60
 
 jobs:
-  check:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,8 +29,17 @@ jobs:
       - name: Clippy
         run: cargo clippy -- -D warnings
 
-      - name: Run tests
-        run: cargo test
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
 
       - name: Install cargo-tarpaulin
         uses: taiki-e/install-action@v2
