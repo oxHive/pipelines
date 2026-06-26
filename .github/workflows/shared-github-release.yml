@@ -53,11 +53,11 @@ jobs:
           MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
           MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
           MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
-          CHANGELOG: ${{ steps.git-cliff.outputs.content }}
         run: |
           RELEASE_URL="${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
           HOMESERVER="${MATRIX_HOMESERVER%/}"
           ENCODED_ROOM=$(jq -rn --arg r "${MATRIX_ROOM_ID}" '$r | @uri')
+          CHANGELOG=$(cat CHANGES.md)
           CHANGELOG_HTML=$(printf '%s' "${CHANGELOG}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
           BODY=$(jq -n \
             --arg repo "${{ github.repository }}" \
