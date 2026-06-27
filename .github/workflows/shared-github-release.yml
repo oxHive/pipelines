@@ -49,6 +49,7 @@ jobs:
 
       - name: Notify Matrix
         if: ${{ env.MATRIX_ACCESS_TOKEN != '' }}
+        continue-on-error: true
         env:
           MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
           MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
