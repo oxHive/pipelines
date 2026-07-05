@@ -12,8 +12,6 @@ on:
         type: string
         required: true
     secrets:
-      CARGO_REGISTRY_TOKEN:
-        required: true
       MATRIX_HOMESERVER:
         required: false
       MATRIX_ACCESS_TOKEN:
@@ -50,8 +48,9 @@ jobs:
   publish-crates:
     needs: github-release
     uses: oxHive/pipelines/.github/workflows/rust-publish-crates.yml@main
-    secrets:
-      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+    permissions:
+      id-token: write
+      contents: read
 
   notify-failure:
     needs: [verify-version, check, build-binaries, github-release, publish-crates]
