@@ -7,9 +7,22 @@ on:
         description: Binary file name produced by `cargo build --release`
         type: string
         required: true
+      dashboard-dir:
+        description: Path to a bun-managed dashboard to build and embed before `cargo build --release` (e.g. `dashboard`). Leave empty to skip.
+        type: string
+        default: ""
 
 jobs:
+  build-dashboard:
+    if: inputs.dashboard-dir != ''
+    uses: oxHive/pipelines/.github/workflows/bun-build.yml@main
+    with:
+      working-directory: ${{ inputs.dashboard-dir }}
+      artifact-name: dashboard-dist
+
   build-binaries:
+    needs: build-dashboard
+    if: always() && !failure() && !cancelled()
     strategy:
       matrix:
         include:
@@ -35,6 +48,13 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
+
+      - name: Download dashboard
+        if: inputs.dashboard-dir != ''
+        uses: actions/download-artifact@v6
+        with:
+          name: dashboard-dist
+          path: ${{ inputs.dashboard-dir }}/dist
 
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}

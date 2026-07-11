@@ -1,0 +1,43 @@
+name: Bun Build
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: Directory containing the bun-managed package (package.json)
+        type: string
+        required: true
+      build-script:
+        description: bun script to run (e.g. `build`)
+        type: string
+        default: build
+      dist-dir:
+        description: Output directory (relative to working-directory) to upload as an artifact
+        type: string
+        default: dist
+      artifact-name:
+        description: Name of the uploaded artifact, used by callers to download it
+        type: string
+        default: bun-build
+
+jobs:
+  bun-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        working-directory: ${{ inputs.working-directory }}
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        working-directory: ${{ inputs.working-directory }}
+        run: bun run ${{ inputs.build-script }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.working-directory }}/${{ inputs.dist-dir }}

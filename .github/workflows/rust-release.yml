@@ -11,6 +11,10 @@ on:
         description: Binary file name produced by `cargo build --release`
         type: string
         required: true
+      dashboard-dir:
+        description: Path to a bun-managed dashboard to build and embed before `cargo build --release` (e.g. `dashboard`). Leave empty to skip.
+        type: string
+        default: ""
     secrets:
       MATRIX_HOMESERVER:
         required: false
@@ -36,6 +40,7 @@ jobs:
     uses: oxHive/pipelines/.github/workflows/rust-build-binaries.yml@main
     with:
       binary-name: ${{ inputs.binary-name }}
+      dashboard-dir: ${{ inputs.dashboard-dir }}
 
   github-release:
     needs: build-binaries
