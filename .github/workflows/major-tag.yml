@@ -1,0 +1,12 @@
+name: Major Tag
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  major-tag:
+    uses: ./.github/workflows/shared-major-tag.yml
+    permissions:
+      contents: write
