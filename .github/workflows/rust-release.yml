@@ -18,7 +18,9 @@ on:
     secrets:
       MATRIX_HOMESERVER:
         required: false
-      MATRIX_ACCESS_TOKEN:
+      MATRIX_USER:
+        required: false
+      MATRIX_PASSWORD:
         required: false
       MATRIX_ROOM_ID:
         required: false
@@ -47,7 +49,8 @@ jobs:
     uses: oxHive/pipelines/.github/workflows/shared-github-release.yml@main
     secrets:
       MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
-      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_USER: ${{ secrets.MATRIX_USER }}
+      MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
       MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
 
   publish-crates:
@@ -62,24 +65,18 @@ jobs:
     if: failure()
     runs-on: ubuntu-latest
     env:
-      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_USER: ${{ secrets.MATRIX_USER }}
     steps:
       - name: Notify Matrix
-        if: ${{ env.MATRIX_ACCESS_TOKEN != '' }}
+        if: ${{ env.MATRIX_USER != '' }}
         continue-on-error: true
-        env:
-          MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
-          MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
-          MATRIX_ALERT_ROOM_ID: ${{ secrets.MATRIX_ALERT_ROOM_ID }}
-        run: |
-          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          ENCODED_ROOM=$(jq -rn --arg r "${MATRIX_ALERT_ROOM_ID}" '$r | @uri')
-          BODY=$(jq -n \
-            --arg body "Release pipeline failed for ${{ github.ref_name }}: ${RUN_URL}" \
-            --arg formatted "<b>${{ github.repository }}</b> release pipeline failed for <code>${{ github.ref_name }}</code> — <a href=\"${RUN_URL}\">view run</a>" \
-            '{msgtype: "m.text", body: $body, format: "org.matrix.custom.html", formatted_body: $formatted}')
-          curl -sf -X PUT \
-            "${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${ENCODED_ROOM}/send/m.room.message/${{ github.run_id }}-fail" \
-            -H "Authorization: Bearer ${MATRIX_ACCESS_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "${BODY}"
+        uses: oxGrad/matrix-notify-action@v1
+        with:
+          homeserver: ${{ secrets.MATRIX_HOMESERVER }}
+          user: ${{ secrets.MATRIX_USER }}
+          password: ${{ secrets.MATRIX_PASSWORD }}
+          room_id: ${{ secrets.MATRIX_ALERT_ROOM_ID }}
+          format: markdown
+          msgtype: m.text
+          message: |
+            Release pipeline failed for `${{ github.ref_name }}`: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

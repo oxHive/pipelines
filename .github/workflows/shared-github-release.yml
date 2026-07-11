@@ -5,7 +5,9 @@ on:
     secrets:
       MATRIX_HOMESERVER:
         required: false
-      MATRIX_ACCESS_TOKEN:
+      MATRIX_USER:
+        required: false
+      MATRIX_PASSWORD:
         required: false
       MATRIX_ROOM_ID:
         required: false
@@ -17,7 +19,7 @@ jobs:
       contents: write
       pull-requests: read
     env:
-      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_USER: ${{ secrets.MATRIX_USER }}
 
     steps:
       - uses: actions/checkout@v7
@@ -47,33 +49,28 @@ jobs:
           body_path: CHANGES.md
           files: artifacts/*.tar.gz
 
-      - name: Notify Matrix
-        if: ${{ env.MATRIX_ACCESS_TOKEN != '' }}
-        continue-on-error: true
-        env:
-          MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
-          MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
-          MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
+      - name: Read changelog
+        if: ${{ env.MATRIX_USER != '' }}
+        id: changelog
         run: |
-          RELEASE_URL="${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
-          HOMESERVER="${MATRIX_HOMESERVER%/}"
-          ENCODED_ROOM=$(jq -rn --arg r "${MATRIX_ROOM_ID}" '$r | @uri')
-          CHANGELOG=$(cat CHANGES.md)
-          CHANGELOG_HTML=$(printf '%s' "${CHANGELOG}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
-          BODY=$(jq -n \
-            --arg repo "${{ github.repository }}" \
-            --arg tag "${{ github.ref_name }}" \
-            --arg url "${RELEASE_URL}" \
-            --arg changelog "${CHANGELOG}" \
-            --arg changelog_html "${CHANGELOG_HTML}" \
-            '{
-              msgtype: "m.text",
-              body: ("Released " + $tag + ": " + $url + "\n\n" + $changelog),
-              format: "org.matrix.custom.html",
-              formatted_body: ("<b>" + $repo + "</b> released <a href=\"" + $url + "\">" + $tag + "</a><br><pre>" + $changelog_html + "</pre>")
-            }')
-          curl -s --fail-with-body -X PUT \
-            "${HOMESERVER}/_matrix/client/v3/rooms/${ENCODED_ROOM}/send/m.room.message/${{ github.run_id }}" \
-            -H "Authorization: Bearer ${MATRIX_ACCESS_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "${BODY}"
+          {
+            echo 'content<<EOF'
+            cat CHANGES.md
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Notify Matrix
+        if: ${{ env.MATRIX_USER != '' }}
+        continue-on-error: true
+        uses: oxGrad/matrix-notify-action@v1
+        with:
+          homeserver: ${{ secrets.MATRIX_HOMESERVER }}
+          user: ${{ secrets.MATRIX_USER }}
+          password: ${{ secrets.MATRIX_PASSWORD }}
+          room_id: ${{ secrets.MATRIX_ROOM_ID }}
+          format: markdown
+          msgtype: m.text
+          message: |
+            Released [${{ github.ref_name }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }})
+
+            ${{ steps.changelog.outputs.content }}
