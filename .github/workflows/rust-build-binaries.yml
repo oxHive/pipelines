@@ -51,7 +51,7 @@ jobs:
 
       - name: Download dashboard
         if: inputs.dashboard-dir != ''
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: dashboard-dist
           path: ${{ inputs.dashboard-dir }}/dist
