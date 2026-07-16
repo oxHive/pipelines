@@ -1,0 +1,76 @@
+name: npm Publish
+
+on:
+  workflow_call:
+    inputs:
+      package-path:
+        description: Directory containing the package.json to publish (e.g. `plugins/opencode`)
+        type: string
+        required: true
+      build-script:
+        description: bun script to run before publish (e.g. `build`). Leave empty to skip.
+        type: string
+        default: build
+      provenance:
+        description: Publish with npm provenance attestations (requires a public package and OIDC)
+        type: boolean
+        default: true
+      access:
+        description: npm publish access level
+        type: string
+        default: public
+      node-version:
+        description: Node.js version used for npm registry auth
+        type: string
+        default: "20"
+    secrets:
+      NPM_TOKEN:
+        description: npm registry auth token, injected as NODE_AUTH_TOKEN for `npm publish`
+        required: true
+
+jobs:
+  verify-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Verify package.json version matches tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          PKG=$(node -p "require('./${{ inputs.package-path }}/package.json').version")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::${{ inputs.package-path }}/package.json version ($PKG) does not match tag ($TAG)"
+            exit 1
+          fi
+          echo "Version check passed: $PKG"
+
+  publish:
+    needs: verify-version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        working-directory: ${{ inputs.package-path }}
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        if: ${{ inputs.build-script != '' }}
+        working-directory: ${{ inputs.package-path }}
+        run: bun run ${{ inputs.build-script }}
+
+      - name: Publish to npm
+        working-directory: ${{ inputs.package-path }}
+        run: npm publish --access ${{ inputs.access }} ${{ inputs.provenance && '--provenance' || '' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
