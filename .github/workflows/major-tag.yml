@@ -10,3 +10,4 @@ jobs:
     uses: ./.github/workflows/shared-major-tag.yml
     permissions:
       contents: write
+      workflows: write
