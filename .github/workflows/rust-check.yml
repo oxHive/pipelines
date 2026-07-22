@@ -7,6 +7,10 @@ on:
         description: Minimum code coverage percentage
         type: number
         default: 60
+      upload-coverage:
+        description: Upload coverage report to Codecov
+        type: boolean
+        default: false
 
 jobs:
   lint:
@@ -48,3 +52,11 @@ jobs:
 
       - name: Check coverage
         run: cargo tarpaulin --out Xml --fail-under ${{ inputs.fail-under-coverage }}
+
+      - name: Upload coverage to Codecov
+        if: ${{ inputs.upload-coverage }}
+        uses: codecov/codecov-action@v5
+        with:
+          files: cobertura.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
