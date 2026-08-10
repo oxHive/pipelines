@@ -8,6 +8,5 @@ on:
 jobs:
   major-tag:
     uses: ./.github/workflows/shared-major-tag.yml
-    permissions:
-      contents: write
-      workflows: write
+    secrets:
+      MAJOR_TAG_TOKEN: ${{ secrets.MAJOR_TAG_TOKEN }}

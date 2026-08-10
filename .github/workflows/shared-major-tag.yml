@@ -1,16 +1,19 @@
 name: Shared Major Tag
 
 on:
-  workflow_call: {}
+  workflow_call:
+    secrets:
+      MAJOR_TAG_TOKEN:
+        description: PAT with `repo` + `workflow` scope. Required because GITHUB_TOKEN can never push a ref whose commit touches .github/workflows/*, regardless of `permissions:`.
+        required: true
 
 jobs:
   major-tag:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      workflows: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.MAJOR_TAG_TOKEN }}
 
       - name: Move major version tag
         run: |
