@@ -43,6 +43,7 @@ jobs:
           user: ${{ secrets.MATRIX_USER }}
           password: ${{ secrets.MATRIX_PASSWORD }}
           room_id: ${{ secrets.MATRIX_ROOM_ID }}
+          store_path: ${{ runner.temp }}/matrix-store
           format: markdown
           msgtype: m.text
           message: |
