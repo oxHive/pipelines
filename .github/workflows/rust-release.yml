@@ -37,8 +37,12 @@ jobs:
     needs: verify-version
     uses: oxHive/pipelines/.github/workflows/rust-check.yml@main
 
+  audit:
+    needs: verify-version
+    uses: oxHive/pipelines/.github/workflows/rust-audit.yml@main
+
   build-binaries:
-    needs: check
+    needs: [check, audit]
     uses: oxHive/pipelines/.github/workflows/rust-build-binaries.yml@main
     with:
       binary-name: ${{ inputs.binary-name }}
@@ -65,7 +69,7 @@ jobs:
       MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
 
   notify-failure:
-    needs: [verify-version, check, build-binaries, github-release, publish-crates]
+    needs: [verify-version, check, audit, build-binaries, github-release, publish-crates]
     if: failure()
     uses: oxHive/pipelines/.github/workflows/shared-notify-failure.yml@main
     with:
