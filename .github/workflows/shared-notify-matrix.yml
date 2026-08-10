@@ -14,15 +14,18 @@ on:
 
 jobs:
   notify-matrix:
-    if: ${{ secrets.MATRIX_USER != '' }}
     runs-on: ubuntu-latest
+    env:
+      MATRIX_USER: ${{ secrets.MATRIX_USER }}
     steps:
       - name: Download changelog
+        if: ${{ env.MATRIX_USER != '' }}
         uses: actions/download-artifact@v8
         with:
           name: changelog
 
       - name: Read changelog
+        if: ${{ env.MATRIX_USER != '' }}
         id: changelog
         run: |
           {
@@ -32,6 +35,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Notify Matrix
+        if: ${{ env.MATRIX_USER != '' }}
         continue-on-error: true
         uses: oxGrad/matrix-notify-action@v1
         with:

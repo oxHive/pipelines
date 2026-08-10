@@ -19,10 +19,12 @@ on:
 
 jobs:
   notify-failure:
-    if: ${{ secrets.MATRIX_USER != '' }}
     runs-on: ubuntu-latest
+    env:
+      MATRIX_USER: ${{ secrets.MATRIX_USER }}
     steps:
       - name: Notify Matrix
+        if: ${{ env.MATRIX_USER != '' }}
         continue-on-error: true
         uses: oxGrad/matrix-notify-action@v1
         with:
