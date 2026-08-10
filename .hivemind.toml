@@ -1,0 +1,8 @@
+[project]
+name = "pipelines"
+layer = "workspace"
+description = "Library of reusable GitHub Actions workflows for OxHive projects"
+
+[hooks.on_session_start]
+max_tokens = 2000
+recalls = ["tag:preferences", "tag:project:pipelines & tag:entrypoint"]
