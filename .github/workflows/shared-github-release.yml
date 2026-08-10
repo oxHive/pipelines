@@ -18,8 +18,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: read
-    env:
-      MATRIX_USER: ${{ secrets.MATRIX_USER }}
 
     steps:
       - uses: actions/checkout@v7
@@ -49,8 +47,26 @@ jobs:
           body_path: CHANGES.md
           files: artifacts/*.tar.gz
 
+      - name: Upload changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: CHANGES.md
+
+  notify-matrix:
+    needs: release
+    runs-on: ubuntu-latest
+    if: ${{ secrets.MATRIX_USER != '' }}
+    env:
+      MATRIX_USER: ${{ secrets.MATRIX_USER }}
+
+    steps:
+      - name: Download changelog
+        uses: actions/download-artifact@v8
+        with:
+          name: changelog
+
       - name: Read changelog
-        if: ${{ env.MATRIX_USER != '' }}
         id: changelog
         run: |
           {
@@ -60,8 +76,6 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Notify Matrix
-        if: ${{ env.MATRIX_USER != '' }}
-        continue-on-error: true
         uses: oxGrad/matrix-notify-action@v1
         with:
           homeserver: ${{ secrets.MATRIX_HOMESERVER }}
