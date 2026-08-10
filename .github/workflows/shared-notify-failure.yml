@@ -1,0 +1,35 @@
+name: Notify Failure
+
+on:
+  workflow_call:
+    inputs:
+      message:
+        description: Failure message to send to Matrix
+        type: string
+        required: true
+    secrets:
+      MATRIX_HOMESERVER:
+        required: false
+      MATRIX_USER:
+        required: false
+      MATRIX_PASSWORD:
+        required: false
+      MATRIX_ALERT_ROOM_ID:
+        required: false
+
+jobs:
+  notify-failure:
+    if: ${{ secrets.MATRIX_USER != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Matrix
+        continue-on-error: true
+        uses: oxGrad/matrix-notify-action@v1
+        with:
+          homeserver: ${{ secrets.MATRIX_HOMESERVER }}
+          user: ${{ secrets.MATRIX_USER }}
+          password: ${{ secrets.MATRIX_PASSWORD }}
+          room_id: ${{ secrets.MATRIX_ALERT_ROOM_ID }}
+          format: markdown
+          msgtype: m.text
+          message: ${{ inputs.message }}

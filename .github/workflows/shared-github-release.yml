@@ -2,15 +2,6 @@ name: GitHub Release
 
 on:
   workflow_call:
-    secrets:
-      MATRIX_HOMESERVER:
-        required: false
-      MATRIX_USER:
-        required: false
-      MATRIX_PASSWORD:
-        required: false
-      MATRIX_ROOM_ID:
-        required: false
 
 jobs:
   release:
@@ -52,39 +43,3 @@ jobs:
         with:
           name: changelog
           path: CHANGES.md
-
-  notify-matrix:
-    needs: release
-    runs-on: ubuntu-latest
-    if: ${{ secrets.MATRIX_USER != '' }}
-    env:
-      MATRIX_USER: ${{ secrets.MATRIX_USER }}
-
-    steps:
-      - name: Download changelog
-        uses: actions/download-artifact@v8
-        with:
-          name: changelog
-
-      - name: Read changelog
-        id: changelog
-        run: |
-          {
-            echo 'content<<EOF'
-            cat CHANGES.md
-            echo EOF
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Notify Matrix
-        uses: oxGrad/matrix-notify-action@v1
-        with:
-          homeserver: ${{ secrets.MATRIX_HOMESERVER }}
-          user: ${{ secrets.MATRIX_USER }}
-          password: ${{ secrets.MATRIX_PASSWORD }}
-          room_id: ${{ secrets.MATRIX_ROOM_ID }}
-          format: markdown
-          msgtype: m.text
-          message: |
-            Released [${{ github.ref_name }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }})
-
-            ${{ steps.changelog.outputs.content }}

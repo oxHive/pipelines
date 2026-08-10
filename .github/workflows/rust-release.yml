@@ -47,11 +47,6 @@ jobs:
   github-release:
     needs: build-binaries
     uses: oxHive/pipelines/.github/workflows/shared-github-release.yml@main
-    secrets:
-      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
-      MATRIX_USER: ${{ secrets.MATRIX_USER }}
-      MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
-      MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
 
   publish-crates:
     needs: github-release
@@ -60,23 +55,23 @@ jobs:
       id-token: write
       contents: read
 
+  notify-matrix:
+    needs: publish-crates
+    uses: oxHive/pipelines/.github/workflows/shared-notify-matrix.yml@main
+    secrets:
+      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+      MATRIX_USER: ${{ secrets.MATRIX_USER }}
+      MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
+      MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
+
   notify-failure:
     needs: [verify-version, check, build-binaries, github-release, publish-crates]
     if: failure()
-    runs-on: ubuntu-latest
-    env:
+    uses: oxHive/pipelines/.github/workflows/shared-notify-failure.yml@main
+    with:
+      message: "Release pipeline failed for `${{ github.ref_name }}`: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+    secrets:
+      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
       MATRIX_USER: ${{ secrets.MATRIX_USER }}
-    steps:
-      - name: Notify Matrix
-        if: ${{ env.MATRIX_USER != '' }}
-        continue-on-error: true
-        uses: oxGrad/matrix-notify-action@v1
-        with:
-          homeserver: ${{ secrets.MATRIX_HOMESERVER }}
-          user: ${{ secrets.MATRIX_USER }}
-          password: ${{ secrets.MATRIX_PASSWORD }}
-          room_id: ${{ secrets.MATRIX_ALERT_ROOM_ID }}
-          format: markdown
-          msgtype: m.text
-          message: |
-            Release pipeline failed for `${{ github.ref_name }}`: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      MATRIX_PASSWORD: ${{ secrets.MATRIX_PASSWORD }}
+      MATRIX_ALERT_ROOM_ID: ${{ secrets.MATRIX_ALERT_ROOM_ID }}
