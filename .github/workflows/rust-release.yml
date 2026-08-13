@@ -15,6 +15,22 @@ on:
         description: Path to a bun-managed dashboard to build and embed before `cargo build --release` (e.g. `dashboard`). Leave empty to skip.
         type: string
         default: ""
+      homebrew-owner:
+        description: GitHub owner/org of the Homebrew tap repo
+        type: string
+        default: "oxhive"
+      homebrew-tap:
+        description: Name of the Homebrew tap repo (as it appears on GitHub)
+        type: string
+        default: "homebrew-tap"
+      homebrew-install:
+        description: Ruby install block for the Homebrew formula, e.g. `bin.install "mytool"`. Leave empty to skip Homebrew publishing.
+        type: string
+        default: ""
+      homebrew-test-command:
+        description: Ruby test block for the Homebrew formula, e.g. `system "#{bin}/mytool", "--version"`
+        type: string
+        default: ""
     secrets:
       MATRIX_HOMESERVER:
         required: false
@@ -25,6 +41,8 @@ on:
       MATRIX_ROOM_ID:
         required: false
       MATRIX_ALERT_ROOM_ID:
+        required: false
+      HOMEBREW_TAP_TOKEN:
         required: false
 
 jobs:
@@ -59,8 +77,22 @@ jobs:
       id-token: write
       contents: read
 
+  publish-homebrew:
+    needs: github-release
+    if: inputs.homebrew-install != ''
+    uses: oxHive/pipelines/.github/workflows/rust-publish-homebrew.yml@main
+    with:
+      binary-name: ${{ inputs.binary-name }}
+      homebrew-owner: ${{ inputs.homebrew-owner }}
+      homebrew-tap: ${{ inputs.homebrew-tap }}
+      install: ${{ inputs.homebrew-install }}
+      test-command: ${{ inputs.homebrew-test-command }}
+    secrets:
+      HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
   notify-matrix:
-    needs: publish-crates
+    needs: [publish-crates, publish-homebrew]
+    if: always() && !failure() && !cancelled()
     uses: oxHive/pipelines/.github/workflows/shared-notify-matrix.yml@main
     secrets:
       MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
@@ -69,7 +101,7 @@ jobs:
       MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
 
   notify-failure:
-    needs: [verify-version, check, audit, build-binaries, github-release, publish-crates]
+    needs: [verify-version, check, audit, build-binaries, github-release, publish-crates, publish-homebrew]
     if: failure()
     uses: oxHive/pipelines/.github/workflows/shared-notify-failure.yml@main
     with:
