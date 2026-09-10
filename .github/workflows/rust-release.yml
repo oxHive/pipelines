@@ -155,7 +155,7 @@ jobs:
         publish-homebrew,
       ]
     if: failure()
-    uses: oxHive/pipelines/.github/workflows/shared-notify-matrix.yml@v3
+    uses: oxHive/pipelines/.github/workflows/notify-matrix.yml@v3
     with:
       alert: true
       message: "Release pipeline failed for `${{ github.ref_name }}`: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
