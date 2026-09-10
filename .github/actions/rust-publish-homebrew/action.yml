@@ -1,0 +1,68 @@
+name: Rust Publish Homebrew
+description: >
+  Repackage cross-compiled release artifacts with Homebrew-required suffixes,
+  upload them to the current GitHub release, and push a formula to a Homebrew tap.
+
+inputs:
+  binary-name:
+    description: Binary file name produced by `cargo build --release` (used to match uploaded build artifacts)
+    required: true
+  homebrew-owner:
+    description: GitHub owner/org of the Homebrew tap repo
+    default: "oxhive"
+  homebrew-tap:
+    description: Name of the Homebrew tap repo (as it appears on GitHub)
+    default: "homebrew-tap"
+  install:
+    description: Ruby install block for the formula, e.g. `bin.install "mytool"`
+    required: true
+  test-command:
+    description: Ruby test block for the formula, e.g. `system "#{bin}/mytool", "--version"`
+    default: ""
+  formula-folder:
+    description: Folder in the tap repo where the formula file is committed
+    default: "Formula"
+  homebrew-tap-token:
+    description: PAT with `repo` scope on the tap repo (was the HOMEBREW_TAP_TOKEN secret)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v7
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v8
+      with:
+        path: artifacts
+        merge-multiple: true
+
+    - name: Repackage artifacts with Homebrew-required suffixes
+      shell: bash
+      run: |
+        mkdir homebrew
+        cp artifacts/${{ inputs.binary-name }}-x86_64-unknown-linux-gnu.tar.gz \
+          homebrew/${{ inputs.binary-name }}-linux-amd64.tar.gz
+        cp artifacts/${{ inputs.binary-name }}-aarch64-unknown-linux-gnu.tar.gz \
+          homebrew/${{ inputs.binary-name }}-linux-arm64.tar.gz
+        cp artifacts/${{ inputs.binary-name }}-aarch64-apple-darwin.tar.gz \
+          homebrew/${{ inputs.binary-name }}-darwin-arm64.tar.gz
+
+    - name: Upload Homebrew assets to release
+      uses: softprops/action-gh-release@v3
+      with:
+        files: homebrew/*.tar.gz
+
+    - name: Release to Homebrew tap
+      uses: Justintime50/homebrew-releaser@v3
+      with:
+        homebrew_owner: ${{ inputs.homebrew-owner }}
+        homebrew_tap: ${{ inputs.homebrew-tap }}
+        formula_folder: ${{ inputs.formula-folder }}
+        github_token: ${{ inputs.homebrew-tap-token }}
+        install: ${{ inputs.install }}
+        test: ${{ inputs.test-command }}
+        target_darwin_amd64: false
+        target_darwin_arm64: true
+        target_linux_amd64: true
+        target_linux_arm64: true

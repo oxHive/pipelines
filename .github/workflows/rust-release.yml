@@ -80,15 +80,18 @@ jobs:
   publish-homebrew:
     needs: github-release
     if: inputs.homebrew-install != ''
-    uses: oxHive/pipelines/.github/workflows/rust-publish-homebrew.yml@main
-    with:
-      binary-name: ${{ inputs.binary-name }}
-      homebrew-owner: ${{ inputs.homebrew-owner }}
-      homebrew-tap: ${{ inputs.homebrew-tap }}
-      install: ${{ inputs.homebrew-install }}
-      test-command: ${{ inputs.homebrew-test-command }}
-    secrets:
-      HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: oxHive/pipelines/.github/actions/rust-publish-homebrew@main
+        with:
+          binary-name: ${{ inputs.binary-name }}
+          homebrew-owner: ${{ inputs.homebrew-owner }}
+          homebrew-tap: ${{ inputs.homebrew-tap }}
+          install: ${{ inputs.homebrew-install }}
+          test-command: ${{ inputs.homebrew-test-command }}
+          homebrew-tap-token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
   notify-matrix:
     needs: [publish-crates, publish-homebrew]
