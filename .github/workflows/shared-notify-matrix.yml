@@ -1,7 +1,20 @@
-name: Notify Matrix Release
+name: Notify Matrix
 
 on:
   workflow_call:
+    inputs:
+      message:
+        description: Message body to send to Matrix (markdown)
+        type: string
+        required: true
+      append-changelog:
+        description: Download the `changelog` artifact and append CHANGES.md to the message
+        type: boolean
+        default: false
+      alert:
+        description: Send to the alert room (MATRIX_ALERT_ROOM_ID) instead of the release room
+        type: boolean
+        default: false
     secrets:
       MATRIX_HOMESERVER:
         required: false
@@ -11,21 +24,23 @@ on:
         required: false
       MATRIX_ROOM_ID:
         required: false
+      MATRIX_ALERT_ROOM_ID:
+        required: false
 
 jobs:
-  notify-matrix:
+  notify:
     runs-on: ubuntu-latest
     env:
       MATRIX_USER: ${{ secrets.MATRIX_USER }}
     steps:
       - name: Download changelog
-        if: ${{ env.MATRIX_USER != '' }}
+        if: ${{ env.MATRIX_USER != '' && inputs.append-changelog }}
         uses: actions/download-artifact@v8
         with:
           name: changelog
 
       - name: Read changelog
-        if: ${{ env.MATRIX_USER != '' }}
+        if: ${{ env.MATRIX_USER != '' && inputs.append-changelog }}
         id: changelog
         run: |
           {
@@ -42,11 +57,11 @@ jobs:
           homeserver: ${{ secrets.MATRIX_HOMESERVER }}
           user: ${{ secrets.MATRIX_USER }}
           password: ${{ secrets.MATRIX_PASSWORD }}
-          room_id: ${{ secrets.MATRIX_ROOM_ID }}
+          room_id: ${{ inputs.alert && secrets.MATRIX_ALERT_ROOM_ID || secrets.MATRIX_ROOM_ID }}
           store_path: ${{ runner.temp }}/matrix-store
           format: markdown
           msgtype: m.text
           message: |
-            Released [${{ github.ref_name }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }})
+            ${{ inputs.message }}
 
             ${{ steps.changelog.outputs.content }}

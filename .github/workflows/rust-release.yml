@@ -84,9 +84,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - { target: x86_64-unknown-linux-gnu,  os: ubuntu-latest }
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest }
           - { target: aarch64-unknown-linux-gnu, os: ubuntu-24.04-arm }
-          - { target: aarch64-apple-darwin,      os: macos-latest }
+          - { target: aarch64-apple-darwin, os: macos-latest }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: oxHive/pipelines/.github/actions/rust-build-binaries@main
@@ -102,7 +102,7 @@ jobs:
       contents: write
       pull-requests: read
     steps:
-      - uses: oxHive/pipelines/.github/actions/shared-github-release@main
+      - uses: oxHive/pipelines/.github/actions/github-release@main
 
   publish-crates:
     needs: github-release
@@ -133,6 +133,9 @@ jobs:
     needs: [publish-crates, publish-homebrew]
     if: always() && !failure() && !cancelled()
     uses: oxHive/pipelines/.github/workflows/shared-notify-matrix.yml@main
+    with:
+      append-changelog: true
+      message: "Released [${{ github.ref_name }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }})"
     secrets:
       MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
       MATRIX_USER: ${{ secrets.MATRIX_USER }}
@@ -140,10 +143,21 @@ jobs:
       MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
 
   notify-failure:
-    needs: [verify-version, check, audit, build-dashboard, build-binaries, github-release, publish-crates, publish-homebrew]
+    needs:
+      [
+        verify-version,
+        check,
+        audit,
+        build-dashboard,
+        build-binaries,
+        github-release,
+        publish-crates,
+        publish-homebrew,
+      ]
     if: failure()
-    uses: oxHive/pipelines/.github/workflows/shared-notify-failure.yml@main
+    uses: oxHive/pipelines/.github/workflows/shared-notify-matrix.yml@main
     with:
+      alert: true
       message: "Release pipeline failed for `${{ github.ref_name }}`: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
     secrets:
       MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
