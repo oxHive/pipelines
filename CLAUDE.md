@@ -33,7 +33,7 @@ rust-release.yml (orchestrator, workflow_call)
   └── rust-publish-homebrew # repackages artifacts, pushes a formula to the tap
 ```
 
-`shared-notify-matrix.yml` stays a reusable workflow (job-level `if:` plus per-call secrets). Composite actions can't declare `permissions:`, so the `checks: write` / `id-token: write` / `contents: write` grants live on the corresponding jobs in `rust-release.yml`.
+`notify-matrix.yml` stays a reusable workflow (job-level `if:` plus per-call secrets). Composite actions can't declare `permissions:`, so the `checks: write` / `id-token: write` / `contents: write` grants live on the corresponding jobs in `rust-release.yml`.
 
 Artifacts flow between `rust-build-binaries` and `github-release` via the GitHub Actions artifact store (scoped to the workflow run), not through explicit outputs.
 
@@ -42,7 +42,7 @@ Artifacts flow between `rust-build-binaries` and `github-release` via the GitHub
 - **Workflow names** (`name:` field): title-case, descriptive — e.g. `Rust Build Binaries`, not `build`.
 - **Job names**: kebab-case matching the file name where possible — e.g. job `build-binaries` inside `rust-build-binaries.yml`.
 - **Action versions**: pin to major version tags (`@v7`, `@v2`), not floating `@latest`. Dependabot keeps these current.
-- **Internal `uses:` refs**: every `oxHive/pipelines/.github/...` reference inside this repo is pinned to the current major tag (`@v3`). A consumer's `rust-release.yml@v3` pin does NOT propagate to the nested `uses:` inside it, so each must carry the ref itself and they must all match. `scripts/pin-refs.sh v4` rewrites them on a major bump; `scripts/pin-refs.sh --check` (run by `lint.yml`) fails CI on drift.
+- **Internal `uses:` refs**: every reference from one workflow/action in this repo to another (e.g. `rust-release.yml` calling `.github/actions/rust-check`) uses the [self-repository `$/` syntax](https://github.blog/changelog/2026-07-30-reference-same-repository-actions-with-self-repository-syntax/), e.g. `uses: $/.github/actions/rust-check`, `uses: $/.github/workflows/notify-matrix.yml`. It resolves against the exact commit the calling workflow is running at — no `@ref` suffix, and no checkout needed — so a consumer's `rust-release.yml@v3` pin automatically applies to every nested `uses:` inside it. This requires Actions runner `>= 2.336.0` and is not available on GitHub Enterprise Server.
 - **Secrets**: declare in `workflow_call.secrets` and pass explicitly through every orchestrator layer — never rely on implicit inheritance.
 - **Coverage threshold**: `rust-check.yml` defaults `fail-under-coverage` to `60`. Callers can override this input.
 
