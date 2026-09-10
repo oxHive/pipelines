@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    # Full semver only. Never `v*`, or force-moving the `v1` tag below would
+    # retrigger this workflow on its own push.
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+# Serialize release runs: two `v*` tags pushed close together must not both
+# rewrite CHANGELOG.md / force-move the `v1` tag concurrently.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  changelog:
+    # Skip pre-release tags (`v1.4.0-rc.1`, `v2.0.0-beta.2`, …): a semver
+    # pre-release always contains a hyphen, a final release never does. An RC
+    # must not rewrite the changelog or drag every `@v1` consumer onto an
+    # untested build.
+    if: ${{ !contains(github.ref_name, '-') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint release-bot token
+        id: token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ steps.token.outputs.token }}
+
+      - name: Generate CHANGELOG.md
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --output CHANGELOG.md
+
+      - name: Commit changelog and move the v1 tag
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git config user.name "oxhive-release[bot]"
+          git config user.email "oxhive-release[bot]@users.noreply.github.com"
+
+          if ! git diff --quiet CHANGELOG.md; then
+            git add CHANGELOG.md
+            git commit -m "chore: update CHANGELOG.md for ${TAG} [skip ci]"
+            # A commit may have landed on main since checkout; rebase onto it so
+            # the push is a fast-forward and the changelog commit is never lost.
+            git pull --rebase origin main
+            git push origin main
+          else
+            echo "CHANGELOG.md unchanged."
+          fi
+
+          MAJOR="${TAG%%.*}"          # v1.2.3 -> v1
+          git tag -f "$MAJOR" "$TAG"
+          git push -f origin "refs/tags/${MAJOR}"
