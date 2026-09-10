@@ -49,7 +49,7 @@ jobs:
   verify-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: oxHive/pipelines/.github/actions/rust-verify-version@main
+      - uses: oxHive/pipelines/.github/actions/rust-verify-version@v3
         with:
           package-name: ${{ inputs.package-name }}
 
@@ -57,7 +57,7 @@ jobs:
     needs: verify-version
     runs-on: ubuntu-latest
     steps:
-      - uses: oxHive/pipelines/.github/actions/rust-check@main
+      - uses: oxHive/pipelines/.github/actions/rust-check@v3
 
   audit:
     needs: verify-version
@@ -66,14 +66,14 @@ jobs:
       contents: read
       checks: write
     steps:
-      - uses: oxHive/pipelines/.github/actions/rust-audit@main
+      - uses: oxHive/pipelines/.github/actions/rust-audit@v3
 
   build-dashboard:
     needs: [check, audit]
     if: inputs.dashboard-dir != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: oxHive/pipelines/.github/actions/bun-build@main
+      - uses: oxHive/pipelines/.github/actions/bun-build@v3
         with:
           working-directory: ${{ inputs.dashboard-dir }}
           artifact-name: dashboard-dist
@@ -89,7 +89,7 @@ jobs:
           - { target: aarch64-apple-darwin, os: macos-latest }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: oxHive/pipelines/.github/actions/rust-build-binaries@main
+      - uses: oxHive/pipelines/.github/actions/rust-build-binaries@v3
         with:
           binary-name: ${{ inputs.binary-name }}
           target: ${{ matrix.target }}
@@ -102,7 +102,7 @@ jobs:
       contents: write
       pull-requests: read
     steps:
-      - uses: oxHive/pipelines/.github/actions/github-release@main
+      - uses: oxHive/pipelines/.github/actions/github-release@v3
 
   publish-crates:
     needs: github-release
@@ -111,7 +111,7 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: oxHive/pipelines/.github/actions/rust-publish-crates@main
+      - uses: oxHive/pipelines/.github/actions/rust-publish-crates@v3
 
   publish-homebrew:
     needs: github-release
@@ -120,7 +120,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: oxHive/pipelines/.github/actions/rust-publish-homebrew@main
+      - uses: oxHive/pipelines/.github/actions/rust-publish-homebrew@v3
         with:
           binary-name: ${{ inputs.binary-name }}
           homebrew-owner: ${{ inputs.homebrew-owner }}
@@ -132,7 +132,7 @@ jobs:
   notify-matrix:
     needs: [publish-crates, publish-homebrew]
     if: always() && !failure() && !cancelled()
-    uses: oxHive/pipelines/.github/workflows/shared-notify-matrix.yml@main
+    uses: oxHive/pipelines/.github/workflows/shared-notify-matrix.yml@v3
     with:
       append-changelog: true
       message: "Released [${{ github.ref_name }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }})"
@@ -155,7 +155,7 @@ jobs:
         publish-homebrew,
       ]
     if: failure()
-    uses: oxHive/pipelines/.github/workflows/shared-notify-matrix.yml@main
+    uses: oxHive/pipelines/.github/workflows/shared-notify-matrix.yml@v3
     with:
       alert: true
       message: "Release pipeline failed for `${{ github.ref_name }}`: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
