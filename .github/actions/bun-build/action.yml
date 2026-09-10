@@ -1,0 +1,39 @@
+name: Bun Build
+description: Install dependencies with bun, run a build script, and upload the output directory as an artifact.
+
+inputs:
+  working-directory:
+    description: Directory containing the bun-managed package (package.json)
+    required: true
+  build-script:
+    description: bun script to run (e.g. `build`)
+    default: build
+  dist-dir:
+    description: Output directory (relative to working-directory) to upload as an artifact
+    default: dist
+  artifact-name:
+    description: Name of the uploaded artifact, used by callers to download it
+    default: bun-build
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v7
+
+    - name: Install bun
+      uses: oven-sh/setup-bun@v2
+
+    - name: Install dependencies
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      run: bun install --frozen-lockfile
+
+    - name: Build
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      run: bun run ${{ inputs.build-script }}
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.working-directory }}/${{ inputs.dist-dir }}

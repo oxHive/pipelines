@@ -68,12 +68,32 @@ jobs:
     steps:
       - uses: oxHive/pipelines/.github/actions/rust-audit@main
 
-  build-binaries:
+  build-dashboard:
     needs: [check, audit]
-    uses: oxHive/pipelines/.github/workflows/rust-build-binaries.yml@main
-    with:
-      binary-name: ${{ inputs.binary-name }}
-      dashboard-dir: ${{ inputs.dashboard-dir }}
+    if: inputs.dashboard-dir != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: oxHive/pipelines/.github/actions/bun-build@main
+        with:
+          working-directory: ${{ inputs.dashboard-dir }}
+          artifact-name: dashboard-dist
+
+  build-binaries:
+    needs: [check, audit, build-dashboard]
+    if: always() && !failure() && !cancelled()
+    strategy:
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-gnu,  os: ubuntu-latest }
+          - { target: aarch64-unknown-linux-gnu, os: ubuntu-24.04-arm }
+          - { target: aarch64-apple-darwin,      os: macos-latest }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: oxHive/pipelines/.github/actions/rust-build-binaries@main
+        with:
+          binary-name: ${{ inputs.binary-name }}
+          target: ${{ matrix.target }}
+          dashboard-dir: ${{ inputs.dashboard-dir }}
 
   github-release:
     needs: build-binaries
@@ -120,7 +140,7 @@ jobs:
       MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
 
   notify-failure:
-    needs: [verify-version, check, audit, build-binaries, github-release, publish-crates, publish-homebrew]
+    needs: [verify-version, check, audit, build-dashboard, build-binaries, github-release, publish-crates, publish-homebrew]
     if: failure()
     uses: oxHive/pipelines/.github/workflows/shared-notify-failure.yml@main
     with:
