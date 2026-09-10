@@ -1,0 +1,10 @@
+paths:
+  .github/**/*.{yml,yaml}:
+    ignore:
+      # actionlint doesn't yet recognize GitHub's `$/` self-repository `uses:`
+      # syntax (https://github.blog/changelog/2026-07-30-reference-same-repository-actions-with-self-repository-syntax/).
+      # These patterns only match `$/`-prefixed refs, so a genuinely missing
+      # `@ref` on a third-party action/workflow is still caught. Drop this
+      # file once actionlint ships native support.
+      - 'specifying action "\$/[^"]*" in invalid format because ref is missing\.'
+      - 'reusable workflow call "\$/[^"]*" at "uses" is not following the format'
