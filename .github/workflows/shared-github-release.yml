@@ -39,7 +39,7 @@ jobs:
           files: artifacts/*.tar.gz
 
       - name: Upload changelog
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: changelog
           path: CHANGES.md
