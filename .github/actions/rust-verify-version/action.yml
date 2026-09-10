@@ -1,0 +1,26 @@
+name: Rust Verify Version
+description: Assert the pushed git tag (vX.Y.Z) matches the crate version in Cargo.toml.
+
+inputs:
+  package-name:
+    description: Cargo package name used in Cargo.toml
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v7
+
+    - name: Verify tag matches Cargo.toml version
+      shell: bash
+      env:
+        PACKAGE_NAME: ${{ inputs.package-name }}
+      run: |
+        TAG="${GITHUB_REF#refs/tags/v}"
+        CARGO=$(cargo metadata --no-deps --format-version 1 \
+          | jq -r --arg name "$PACKAGE_NAME" '.packages[] | select(.name == $name) | .version')
+        if [ "$TAG" != "$CARGO" ]; then
+          echo "Tag v$TAG does not match Cargo.toml version $CARGO"
+          exit 1
+        fi
+        echo "Version check passed: $CARGO"

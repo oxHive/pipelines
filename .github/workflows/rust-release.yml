@@ -47,9 +47,11 @@ on:
 
 jobs:
   verify-version:
-    uses: oxHive/pipelines/.github/workflows/rust-verify-version.yml@main
-    with:
-      package-name: ${{ inputs.package-name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: oxHive/pipelines/.github/actions/rust-verify-version@main
+        with:
+          package-name: ${{ inputs.package-name }}
 
   check:
     needs: verify-version
@@ -75,7 +77,12 @@ jobs:
 
   github-release:
     needs: build-binaries
-    uses: oxHive/pipelines/.github/workflows/shared-github-release.yml@main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: oxHive/pipelines/.github/actions/shared-github-release@main
 
   publish-crates:
     needs: github-release

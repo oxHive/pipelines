@@ -1,0 +1,37 @@
+name: GitHub Release
+description: Build a release body with git-cliff and publish a GitHub release with the downloaded build artifacts.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v8
+      with:
+        path: artifacts
+        merge-multiple: true
+
+    - name: Generate changelog
+      uses: orhun/git-cliff-action@v4
+      with:
+        config: cliff.toml
+        args: --latest --strip header
+      env:
+        OUTPUT: CHANGES.md
+        GITHUB_REPO: ${{ github.repository }}
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Create GitHub release
+      uses: softprops/action-gh-release@v3
+      with:
+        body_path: CHANGES.md
+        files: artifacts/*.tar.gz
+
+    - name: Upload changelog
+      uses: actions/upload-artifact@v7
+      with:
+        name: changelog
+        path: CHANGES.md
