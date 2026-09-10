@@ -53,7 +53,9 @@ jobs:
 
   check:
     needs: verify-version
-    uses: oxHive/pipelines/.github/workflows/rust-check.yml@main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: oxHive/pipelines/.github/actions/rust-check@main
 
   audit:
     needs: verify-version
@@ -77,10 +79,12 @@ jobs:
 
   publish-crates:
     needs: github-release
-    uses: oxHive/pipelines/.github/workflows/rust-publish-crates.yml@main
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
+    steps:
+      - uses: oxHive/pipelines/.github/actions/rust-publish-crates@main
 
   publish-homebrew:
     needs: github-release

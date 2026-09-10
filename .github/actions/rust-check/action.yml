@@ -1,0 +1,51 @@
+name: Rust Check
+description: Run cargo fmt, clippy, and tarpaulin coverage against the checked-out crate.
+
+inputs:
+  fail-under-coverage:
+    description: Minimum code coverage percentage
+    default: "60"
+  upload-coverage:
+    description: Upload the coverage report to Codecov ("true" / "false")
+    default: "false"
+  codecov-token:
+    description: Codecov upload token (required only when upload-coverage is "true")
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v7
+
+    - name: Install Rust stable
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+
+    - name: Cache Cargo
+      uses: Swatinem/rust-cache@v2
+
+    - name: Check formatting
+      shell: bash
+      run: cargo fmt --check
+
+    - name: Clippy
+      shell: bash
+      run: cargo clippy -- -D warnings
+
+    - name: Install cargo-tarpaulin
+      uses: taiki-e/install-action@v2
+      with:
+        tool: cargo-tarpaulin
+
+    - name: Check coverage
+      shell: bash
+      run: cargo tarpaulin --out Xml --fail-under ${{ inputs.fail-under-coverage }}
+
+    - name: Upload coverage to Codecov
+      if: ${{ inputs.upload-coverage == 'true' }}
+      uses: codecov/codecov-action@v7
+      with:
+        files: cobertura.xml
+        fail_ci_if_error: false
+        token: ${{ inputs.codecov-token }}
