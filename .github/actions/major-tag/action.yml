@@ -1,0 +1,29 @@
+name: Major Tag
+description: Force-move the `vX` major tag to the `vX.Y.Z` tag that triggered the run.
+
+inputs:
+  token:
+    description: >
+      PAT with `repo` + `workflow` scope. Required because GITHUB_TOKEN can never
+      push a ref whose commit touches .github/workflows/*, regardless of `permissions:`.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v7
+      with:
+        token: ${{ inputs.token }}
+
+    - name: Move major version tag
+      shell: bash
+      env:
+        TAG: ${{ github.ref_name }}
+      run: |
+        if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "'$TAG' is not a full semver tag (vX.Y.Z), skipping"
+          exit 0
+        fi
+        MAJOR="${TAG%%.*}"
+        git tag -f "$MAJOR" "$TAG"
+        git push origin "$MAJOR" --force
