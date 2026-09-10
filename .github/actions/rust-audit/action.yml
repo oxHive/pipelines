@@ -1,0 +1,8 @@
+name: Rust Audit
+description: Run `cargo audit` (rustsec/audit-check) against the checked-out crate.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v7
+    - uses: rustsec/audit-check@v2

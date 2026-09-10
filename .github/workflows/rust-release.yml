@@ -57,7 +57,12 @@ jobs:
 
   audit:
     needs: verify-version
-    uses: oxHive/pipelines/.github/workflows/rust-audit.yml@main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: oxHive/pipelines/.github/actions/rust-audit@main
 
   build-binaries:
     needs: [check, audit]
