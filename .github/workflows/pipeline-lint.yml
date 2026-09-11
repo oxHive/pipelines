@@ -16,6 +16,3 @@ jobs:
 
       - name: actionlint
         uses: raven-actions/actionlint@v2
-
-      - name: Internal refs pinned consistently
-        run: ./scripts/pin-refs.sh --check

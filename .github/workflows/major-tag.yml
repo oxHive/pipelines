@@ -10,6 +10,6 @@ jobs:
   major-tag:
     runs-on: ubuntu-latest
     steps:
-      - uses: oxHive/pipelines/.github/actions/major-tag@v3
+      - uses: $/.github/actions/major-tag
         with:
           token: ${{ secrets.MAJOR_TAG_TOKEN }}
