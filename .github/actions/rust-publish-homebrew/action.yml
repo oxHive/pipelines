@@ -23,12 +23,27 @@ inputs:
     description: Folder in the tap repo where the formula file is committed
     default: "Formula"
   homebrew-tap-token:
-    description: PAT with `repo` scope on the tap repo (was the HOMEBREW_TAP_TOKEN secret)
-    required: true
+    description: PAT with `repo` scope on the tap repo. Use this or homebrew-app-id/homebrew-app-private-key.
+    required: false
+  homebrew-app-id:
+    description: GitHub App ID installed on the tap repo, used to mint a short-lived token instead of a PAT
+    required: false
+  homebrew-app-private-key:
+    description: Private key for the GitHub App named by homebrew-app-id
+    required: false
 
 runs:
   using: composite
   steps:
+    - uses: actions/create-github-app-token@v2
+      id: app-token
+      if: inputs.homebrew-app-id != ''
+      with:
+        app-id: ${{ inputs.homebrew-app-id }}
+        private-key: ${{ inputs.homebrew-app-private-key }}
+        owner: ${{ inputs.homebrew-owner }}
+        repositories: ${{ inputs.homebrew-tap }}
+
     - uses: actions/checkout@v7
 
     - name: Download artifacts
@@ -59,7 +74,7 @@ runs:
         homebrew_owner: ${{ inputs.homebrew-owner }}
         homebrew_tap: ${{ inputs.homebrew-tap }}
         formula_folder: ${{ inputs.formula-folder }}
-        github_token: ${{ inputs.homebrew-tap-token }}
+        github_token: ${{ inputs.homebrew-app-id != '' && steps.app-token.outputs.token || inputs.homebrew-tap-token }}
         install: ${{ inputs.install }}
         test: ${{ inputs.test-command }}
         target_darwin_amd64: false

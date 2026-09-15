@@ -52,6 +52,10 @@ on:
         required: false
       HOMEBREW_TAP_TOKEN:
         required: false
+      HOMEBREW_APP_ID:
+        required: false
+      HOMEBREW_APP_PRIVATE_KEY:
+        required: false
 
 jobs:
   verify-version:
@@ -138,6 +142,8 @@ jobs:
           install: ${{ inputs.homebrew-install }}
           test-command: ${{ inputs.homebrew-test-command }}
           homebrew-tap-token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          homebrew-app-id: ${{ secrets.HOMEBREW_APP_ID }}
+          homebrew-app-private-key: ${{ secrets.HOMEBREW_APP_PRIVATE_KEY }}
 
   notify-matrix:
     needs: [publish-crates, publish-homebrew]
