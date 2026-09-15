@@ -115,7 +115,7 @@ jobs:
 
   publish-crates:
     needs: github-release
-    if: inputs.publish-crates
+    if: always() && !failure() && !cancelled() && inputs.publish-crates
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -125,7 +125,7 @@ jobs:
 
   publish-homebrew:
     needs: github-release
-    if: inputs.publish-homebrew && inputs.homebrew-install != ''
+    if: always() && !failure() && !cancelled() && inputs.publish-homebrew && inputs.homebrew-install != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
