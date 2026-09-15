@@ -64,5 +64,10 @@ jobs:
           fi
 
           MAJOR="${TAG%%.*}"          # v1.2.3 -> v1
-          git tag -f "$MAJOR" "$TAG"
+          # Peel to the commit: `git tag -f v2 v2.5.1` would otherwise point
+          # v2 at the v2.5.1 *tag object* (v2.5.1 is annotated), not its
+          # commit -- a tag-of-a-tag that breaks nested `$/` self-repository
+          # resolution in reusable workflows even though it looks fine to
+          # plain git.
+          git tag -f "$MAJOR" "${TAG}^{commit}"
           git push -f origin "refs/tags/${MAJOR}"
