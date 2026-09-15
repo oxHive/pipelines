@@ -119,7 +119,7 @@ jobs:
 
   publish-crates:
     needs: github-release
-    if: always() && !failure() && !cancelled() && inputs.publish-crates
+    if: always() && !failure() && !cancelled() && inputs.publish-crates && !contains(github.ref_name, '-rc')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -129,7 +129,7 @@ jobs:
 
   publish-homebrew:
     needs: github-release
-    if: always() && !failure() && !cancelled() && inputs.publish-homebrew && inputs.homebrew-install != ''
+    if: always() && !failure() && !cancelled() && inputs.publish-homebrew && inputs.homebrew-install != '' && !contains(github.ref_name, '-rc')
     runs-on: ubuntu-latest
     permissions:
       contents: write
