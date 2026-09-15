@@ -55,13 +55,14 @@ runs:
     - name: Repackage artifacts with Homebrew-required suffixes
       shell: bash
       run: |
+        VERSION="${GITHUB_REF_NAME#v}"
         mkdir homebrew
         cp artifacts/${{ inputs.binary-name }}-x86_64-unknown-linux-gnu.tar.gz \
-          homebrew/${{ inputs.binary-name }}-linux-amd64.tar.gz
+          homebrew/${{ inputs.binary-name }}-$VERSION-linux-amd64.tar.gz
         cp artifacts/${{ inputs.binary-name }}-aarch64-unknown-linux-gnu.tar.gz \
-          homebrew/${{ inputs.binary-name }}-linux-arm64.tar.gz
+          homebrew/${{ inputs.binary-name }}-$VERSION-linux-arm64.tar.gz
         cp artifacts/${{ inputs.binary-name }}-aarch64-apple-darwin.tar.gz \
-          homebrew/${{ inputs.binary-name }}-darwin-arm64.tar.gz
+          homebrew/${{ inputs.binary-name }}-$VERSION-darwin-arm64.tar.gz
 
     - name: Upload Homebrew assets to release
       uses: softprops/action-gh-release@v3
