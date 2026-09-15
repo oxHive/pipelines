@@ -105,6 +105,7 @@ jobs:
 
   github-release:
     needs: build-binaries
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     permissions:
       contents: write
