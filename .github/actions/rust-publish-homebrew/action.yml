@@ -42,7 +42,9 @@ runs:
         app-id: ${{ inputs.homebrew-app-id }}
         private-key: ${{ inputs.homebrew-app-private-key }}
         owner: ${{ inputs.homebrew-owner }}
-        repositories: ${{ inputs.homebrew-tap }}
+        repositories: |
+          ${{ inputs.homebrew-tap }}
+          ${{ github.event.repository.name }}
 
     - uses: actions/checkout@v7
 
