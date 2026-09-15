@@ -31,6 +31,14 @@ on:
         description: Ruby test block for the Homebrew formula, e.g. `system "#{bin}/mytool", "--version"`
         type: string
         default: ""
+      publish-crates:
+        description: Whether to run the publish-crates job
+        type: boolean
+        default: false
+      publish-homebrew:
+        description: Whether to run the publish-homebrew job
+        type: boolean
+        default: false
     secrets:
       MATRIX_HOMESERVER:
         required: false
@@ -106,6 +114,7 @@ jobs:
 
   publish-crates:
     needs: github-release
+    if: inputs.publish-crates
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -115,7 +124,7 @@ jobs:
 
   publish-homebrew:
     needs: github-release
-    if: inputs.homebrew-install != ''
+    if: inputs.publish-homebrew && inputs.homebrew-install != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
