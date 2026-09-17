@@ -42,7 +42,7 @@ on:
       notify-provider:
         description: Which notifier(s) to call on release/failure. One of `matrix`, `discord`, `both`, `none`.
         type: string
-        default: matrix
+        default: discord
       notify-discord-username:
         description: Override the Discord webhook's default sender name
         type: string
