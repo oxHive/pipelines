@@ -43,6 +43,14 @@ on:
         description: Which notifier(s) to call on release/failure. One of `matrix`, `discord`, `both`, `none`.
         type: string
         default: matrix
+      notify-discord-username:
+        description: Override the Discord webhook's default sender name
+        type: string
+        default: ""
+      notify-discord-avatar-url:
+        description: Override the Discord webhook's default sender avatar
+        type: string
+        default: ""
     secrets:
       MATRIX_HOMESERVER:
         required: false
@@ -173,6 +181,8 @@ jobs:
     with:
       append-changelog: true
       message: "Released [${{ github.ref_name }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }})"
+      username: ${{ inputs.notify-discord-username }}
+      avatar_url: ${{ inputs.notify-discord-avatar-url }}
     secrets:
       DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
@@ -216,5 +226,7 @@ jobs:
     with:
       alert: true
       message: "Release pipeline failed for `${{ github.ref_name }}`: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      username: ${{ inputs.notify-discord-username }}
+      avatar_url: ${{ inputs.notify-discord-avatar-url }}
     secrets:
       DISCORD_ALERT_WEBHOOK_URL: ${{ secrets.DISCORD_ALERT_WEBHOOK_URL }}

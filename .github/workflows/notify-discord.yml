@@ -15,6 +15,14 @@ on:
         description: Send to the alert webhook (DISCORD_ALERT_WEBHOOK_URL) instead of the release webhook
         type: boolean
         default: false
+      username:
+        description: Override the webhook's default sender name. Leave empty to use whatever's configured on the webhook.
+        type: string
+        default: ""
+      avatar_url:
+        description: Override the webhook's default sender avatar. Leave empty to use whatever's configured on the webhook.
+        type: string
+        default: ""
     secrets:
       DISCORD_WEBHOOK_URL:
         required: false
@@ -51,8 +59,16 @@ jobs:
             ${{ inputs.message }}
 
             ${{ steps.changelog.outputs.content }}
+          DISCORD_USERNAME: ${{ inputs.username }}
+          DISCORD_AVATAR_URL: ${{ inputs.avatar_url }}
         run: |
-          payload=$(jq -n --arg content "$DISCORD_MESSAGE" '{content: $content}')
+          payload=$(jq -n \
+            --arg content "$DISCORD_MESSAGE" \
+            --arg username "$DISCORD_USERNAME" \
+            --arg avatar_url "$DISCORD_AVATAR_URL" \
+            '{content: $content}
+             + (if $username != "" then {username: $username} else {} end)
+             + (if $avatar_url != "" then {avatar_url: $avatar_url} else {} end)')
           curl -sS --fail-with-body \
             -H "Content-Type: application/json" \
             -d "$payload" \
