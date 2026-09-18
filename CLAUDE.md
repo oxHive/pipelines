@@ -33,7 +33,7 @@ rust-release.yml (orchestrator, workflow_call)
   └── rust-publish-homebrew # repackages artifacts, pushes a formula to the tap
 ```
 
-`notify-matrix.yml` stays a reusable workflow (job-level `if:` plus per-call secrets). Composite actions can't declare `permissions:`, so the `checks: write` / `id-token: write` / `contents: write` grants live on the corresponding jobs in `rust-release.yml`.
+`notify-matrix.yml` and `notify-discord.yml` stay reusable workflows (job-level `if:` plus per-call secrets), not composite actions, since they need their own `secrets:` block. `rust-release.yml`'s `notify-provider` input (`matrix` / `discord` / `both` / `none`, default `discord`) explicitly selects which notifier job(s) run — it's a caller choice, not inferred from which secrets happen to be set. Composite actions can't declare `permissions:`, so the `checks: write` / `id-token: write` / `contents: write` grants live on the corresponding jobs in `rust-release.yml`.
 
 Artifacts flow between `rust-build-binaries` and `github-release` via the GitHub Actions artifact store (scoped to the workflow run), not through explicit outputs.
 
