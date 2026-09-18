@@ -43,6 +43,26 @@ on:
         description: Whether to run the publish-homebrew job
         type: boolean
         default: false
+      publish-docker:
+        description: Whether to run the publish-docker job
+        type: boolean
+        default: false
+      docker-image-name:
+        description: Docker image name, without registry/owner prefix. Defaults to package-name.
+        type: string
+        default: ""
+      docker-file:
+        description: Path to the Dockerfile
+        type: string
+        default: "Dockerfile"
+      docker-context:
+        description: Docker build context
+        type: string
+        default: "."
+      docker-platforms:
+        description: Comma-separated target platforms to build for
+        type: string
+        default: "linux/amd64,linux/arm64"
       notify-provider:
         description: Which notifier(s) to call on release/failure. One of `matrix`, `discord`, `both`, `none`.
         type: string
@@ -167,8 +187,23 @@ jobs:
           homebrew-app-id: ${{ secrets.HOMEBREW_APP_ID }}
           homebrew-app-private-key: ${{ secrets.HOMEBREW_APP_PRIVATE_KEY }}
 
+  publish-docker:
+    needs: github-release
+    if: always() && !failure() && !cancelled() && inputs.publish-docker && !contains(github.ref_name, '-rc')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: $/.github/actions/rust-publish-docker
+        with:
+          image-name: ${{ inputs.docker-image-name != '' && inputs.docker-image-name || inputs.package-name }}
+          dockerfile: ${{ inputs.docker-file }}
+          context: ${{ inputs.docker-context }}
+          platforms: ${{ inputs.docker-platforms }}
+
   notify-matrix:
-    needs: [publish-crates, publish-homebrew]
+    needs: [publish-crates, publish-homebrew, publish-docker]
     if: always() && !failure() && !cancelled() && contains(fromJSON('["matrix", "both"]'), inputs.notify-provider)
     uses: $/.github/workflows/notify-matrix.yml
     with:
@@ -181,7 +216,7 @@ jobs:
       MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
 
   notify-discord:
-    needs: [publish-crates, publish-homebrew]
+    needs: [publish-crates, publish-homebrew, publish-docker]
     if: always() && !failure() && !cancelled() && contains(fromJSON('["discord", "both"]'), inputs.notify-provider)
     uses: $/.github/workflows/notify-discord.yml
     with:
@@ -203,6 +238,7 @@ jobs:
         github-release,
         publish-crates,
         publish-homebrew,
+        publish-docker,
       ]
     if: failure() && contains(fromJSON('["matrix", "both"]'), inputs.notify-provider)
     uses: $/.github/workflows/notify-matrix.yml
@@ -226,6 +262,7 @@ jobs:
         github-release,
         publish-crates,
         publish-homebrew,
+        publish-docker,
       ]
     if: failure() && contains(fromJSON('["discord", "both"]'), inputs.notify-provider)
     uses: $/.github/workflows/notify-discord.yml
