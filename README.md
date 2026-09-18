@@ -27,3 +27,4 @@ See each workflow file under [`.github/workflows/`](.github/workflows/) for its 
 
 - [Discord notification setup](docs/discord-setup.md) — getting a webhook URL for `notify-discord.yml`
 - [Homebrew publishing via GitHub App](docs/homebrew-github-app.md) — scoped token setup for `rust-publish-homebrew`
+- [Dockerfile contract for publish-docker](docs/docker-publish.md) — how to write a Dockerfile that reuses the cross-compiled binaries

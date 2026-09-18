@@ -31,14 +31,14 @@ rust-release.yml (orchestrator, workflow_call)
   ├── github-release        # downloads artifacts, runs git-cliff, creates GH release
   ├── rust-publish-crates   # cargo publish --locked
   ├── rust-publish-homebrew # repackages artifacts, pushes a formula to the tap
-  └── rust-publish-docker   # builds and pushes a multi-arch image to GHCR
+  └── publish-docker        # stages downloaded artifacts, builds and pushes a multi-arch image to GHCR
 ```
 
 `notify-matrix.yml` and `notify-discord.yml` stay reusable workflows (job-level `if:` plus per-call secrets), not composite actions, since they need their own `secrets:` block. `rust-release.yml`'s `notify-provider` input (`matrix` / `discord` / `both` / `none`, default `discord`) explicitly selects which notifier job(s) run — it's a caller choice, not inferred from which secrets happen to be set. Composite actions can't declare `permissions:`, so the `checks: write` / `id-token: write` / `contents: write` grants live on the corresponding jobs in `rust-release.yml`.
 
 Artifacts flow between `rust-build-binaries` and `github-release` via the GitHub Actions artifact store (scoped to the workflow run), not through explicit outputs.
 
-`publish-crates`, `publish-homebrew`, and `publish-docker` are opt-in (`false` by default) — callers must set the matching boolean input to run each job. `publish-homebrew` additionally requires `homebrew-install` to be non-empty. `publish-docker` builds from `dockerfile`/`docker-context` (defaulting to `Dockerfile`/`.`) and pushes `ghcr.io/<owner>/<docker-image-name or package-name>` tagged with the release version and `latest`. See `docs/homebrew-github-app.md` for setting up `HOMEBREW_TAP_TOKEN` via a GitHub App.
+`publish-crates`, `publish-homebrew`, and `publish-docker` are opt-in (`false` by default) — callers must set the matching boolean input to run each job. `publish-homebrew` additionally requires `homebrew-install` to be non-empty. `publish-docker` downloads the `x86_64`/`aarch64`-`unknown-linux-gnu` artifacts from `rust-build-binaries`, stages them at `<docker-context>/dist/linux-amd64/` and `<docker-context>/dist/linux-arm64/`, and builds/pushes `ghcr.io/<owner>/<docker-image-name or package-name>` (tagged with the release version and `latest`) for `linux/amd64,linux/arm64` — no QEMU needed since the Dockerfile only `COPY`s the pre-built binary from `dist/linux-${TARGETARCH}/<binary-name>` rather than compiling it. See `docs/homebrew-github-app.md` for setting up `HOMEBREW_TAP_TOKEN` via a GitHub App.
 
 ## Conventions
 

@@ -59,10 +59,6 @@ on:
         description: Docker build context
         type: string
         default: "."
-      docker-platforms:
-        description: Comma-separated target platforms to build for
-        type: string
-        default: "linux/amd64,linux/arm64"
       notify-provider:
         description: Which notifier(s) to call on release/failure. One of `matrix`, `discord`, `both`, `none`.
         type: string
@@ -195,12 +191,12 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: $/.github/actions/rust-publish-docker
+      - uses: $/.github/actions/publish-docker
         with:
+          binary-name: ${{ inputs.binary-name }}
           image-name: ${{ inputs.docker-image-name != '' && inputs.docker-image-name || inputs.package-name }}
           dockerfile: ${{ inputs.dockerfile }}
           context: ${{ inputs.docker-context }}
-          platforms: ${{ inputs.docker-platforms }}
 
   notify-matrix:
     needs: [publish-crates, publish-homebrew, publish-docker]
