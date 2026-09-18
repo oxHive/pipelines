@@ -51,7 +51,7 @@ on:
         description: Docker image name, without registry/owner prefix. Defaults to package-name.
         type: string
         default: ""
-      docker-file:
+      dockerfile:
         description: Path to the Dockerfile
         type: string
         default: "Dockerfile"
@@ -198,7 +198,7 @@ jobs:
       - uses: $/.github/actions/rust-publish-docker
         with:
           image-name: ${{ inputs.docker-image-name != '' && inputs.docker-image-name || inputs.package-name }}
-          dockerfile: ${{ inputs.docker-file }}
+          dockerfile: ${{ inputs.dockerfile }}
           context: ${{ inputs.docker-context }}
           platforms: ${{ inputs.docker-platforms }}
 

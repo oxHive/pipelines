@@ -38,7 +38,7 @@ rust-release.yml (orchestrator, workflow_call)
 
 Artifacts flow between `rust-build-binaries` and `github-release` via the GitHub Actions artifact store (scoped to the workflow run), not through explicit outputs.
 
-`publish-crates`, `publish-homebrew`, and `publish-docker` are opt-in (`false` by default) — callers must set the matching boolean input to run each job. `publish-homebrew` additionally requires `homebrew-install` to be non-empty. `publish-docker` builds from `docker-file`/`docker-context` (defaulting to `Dockerfile`/`.`) and pushes `ghcr.io/<owner>/<docker-image-name or package-name>` tagged with the release version and `latest`. See `docs/homebrew-github-app.md` for setting up `HOMEBREW_TAP_TOKEN` via a GitHub App.
+`publish-crates`, `publish-homebrew`, and `publish-docker` are opt-in (`false` by default) — callers must set the matching boolean input to run each job. `publish-homebrew` additionally requires `homebrew-install` to be non-empty. `publish-docker` builds from `dockerfile`/`docker-context` (defaulting to `Dockerfile`/`.`) and pushes `ghcr.io/<owner>/<docker-image-name or package-name>` tagged with the release version and `latest`. See `docs/homebrew-github-app.md` for setting up `HOMEBREW_TAP_TOKEN` via a GitHub App.
 
 ## Conventions
 
