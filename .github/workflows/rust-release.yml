@@ -15,6 +15,10 @@ on:
         description: Path to a bun-managed dashboard to build and embed before `cargo build --release` (e.g. `dashboard`). Leave empty to skip.
         type: string
         default: ""
+      fail-under-coverage:
+        description: Minimum code coverage percentage
+        type: string
+        default: "60"
       homebrew-owner:
         description: GitHub owner/org of the Homebrew tap repo
         type: string
@@ -86,6 +90,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: $/.github/actions/rust-check
+        with:
+          fail-under-coverage: ${{ inputs.fail-under-coverage }}
 
   audit:
     needs: verify-version

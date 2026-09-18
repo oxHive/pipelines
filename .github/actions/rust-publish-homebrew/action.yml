@@ -19,9 +19,6 @@ inputs:
   test-command:
     description: Ruby test block for the formula, e.g. `system "#{bin}/mytool", "--version"`
     default: ""
-  formula-folder:
-    description: Folder in the tap repo where the formula file is committed
-    default: "Formula"
   homebrew-tap-token:
     description: PAT with `repo` scope on the tap repo. Use this or homebrew-app-id/homebrew-app-private-key.
     required: false
@@ -76,7 +73,7 @@ runs:
       with:
         homebrew_owner: ${{ inputs.homebrew-owner }}
         homebrew_tap: ${{ inputs.homebrew-tap }}
-        formula_folder: ${{ inputs.formula-folder }}
+        formula_folder: Formula
         github_token: ${{ inputs.homebrew-app-id != '' && steps.app-token.outputs.token || inputs.homebrew-tap-token }}
         install: ${{ inputs.install }}
         test: ${{ inputs.test-command }}

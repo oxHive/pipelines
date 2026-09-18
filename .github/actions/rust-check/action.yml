@@ -5,12 +5,6 @@ inputs:
   fail-under-coverage:
     description: Minimum code coverage percentage
     default: "60"
-  upload-coverage:
-    description: Upload the coverage report to Codecov ("true" / "false")
-    default: "false"
-  codecov-token:
-    description: Codecov upload token (required only when upload-coverage is "true")
-    default: ""
 
 runs:
   using: composite
@@ -41,11 +35,3 @@ runs:
     - name: Check coverage
       shell: bash
       run: cargo tarpaulin --out Xml --fail-under ${{ inputs.fail-under-coverage }}
-
-    - name: Upload coverage to Codecov
-      if: ${{ inputs.upload-coverage == 'true' }}
-      uses: codecov/codecov-action@v7
-      with:
-        files: cobertura.xml
-        fail_ci_if_error: false
-        token: ${{ inputs.codecov-token }}
