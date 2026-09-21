@@ -24,11 +24,18 @@ runs:
         GITHUB_REPO: ${{ github.repository }}
         GITHUB_TOKEN: ${{ github.token }}
 
+    - name: Generate checksums
+      shell: bash
+      working-directory: artifacts
+      run: sha256sum *.tar.gz > checksums.txt
+
     - name: Create GitHub release
       uses: softprops/action-gh-release@v3
       with:
         body_path: CHANGES.md
-        files: artifacts/*.tar.gz
+        files: |
+          artifacts/*.tar.gz
+          artifacts/checksums.txt
         prerelease: ${{ contains(github.ref_name, '-rc') }}
 
     - name: Upload changelog
