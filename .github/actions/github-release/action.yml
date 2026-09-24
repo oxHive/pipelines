@@ -1,6 +1,14 @@
 name: GitHub Release
 description: Build a release body with git-cliff and publish a GitHub release with the downloaded build artifacts.
 
+inputs:
+  binary-name:
+    description: Binary file name produced by `cargo build --release` (used to name checksum.txt entries when Homebrew publishing is skipped)
+    required: true
+  publish-homebrew:
+    description: Whether the publish-homebrew job will run. It generates its own checksum.txt via homebrew-releaser, so this action skips generating one when it will.
+    required: true
+
 runs:
   using: composite
   steps:
@@ -24,10 +32,23 @@ runs:
         GITHUB_REPO: ${{ github.repository }}
         GITHUB_TOKEN: ${{ github.token }}
 
-    - name: Generate checksums
+    - name: Generate checksum.txt (Homebrew publish disabled)
+      if: inputs.publish-homebrew != 'true'
       shell: bash
       working-directory: artifacts
-      run: sha256sum *.tar.gz > checksums.txt
+      run: |
+        version="${GITHUB_REF_NAME#v}"
+        sha256sum *.tar.gz | while read -r hash name; do
+          target="${name%.tar.gz}"
+          target="${target#${{ inputs.binary-name }}-}"
+          case "$target" in
+            x86_64-unknown-linux-gnu) platform=linux-amd64 ;;
+            aarch64-unknown-linux-gnu) platform=linux-arm64 ;;
+            aarch64-apple-darwin) platform=darwin-arm64 ;;
+            *) continue ;;
+          esac
+          echo "$hash  ${{ inputs.binary-name }}-$version-$platform.tar.gz"
+        done > checksum.txt
 
     - name: Create GitHub release
       uses: softprops/action-gh-release@v3
@@ -35,7 +56,7 @@ runs:
         body_path: CHANGES.md
         files: |
           artifacts/*.tar.gz
-          artifacts/checksums.txt
+          artifacts/checksum.txt
         prerelease: ${{ contains(github.ref_name, '-rc') }}
 
     - name: Upload changelog

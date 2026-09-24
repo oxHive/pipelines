@@ -154,6 +154,9 @@ jobs:
       pull-requests: read
     steps:
       - uses: $/.github/actions/github-release
+        with:
+          binary-name: ${{ inputs.binary-name }}
+          publish-homebrew: ${{ inputs.publish-homebrew }}
 
   publish-crates:
     needs: github-release
